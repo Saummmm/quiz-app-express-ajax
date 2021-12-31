@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Time</title>
+</head>
+<body>
+    <h1>JS and HTML Quiz!!!!</h1>
+    <!-- <a href="" id="quiz-link">Display Quiz</a> -->
+    <div id='questions'></div>
+</body>
+<script>
+    function getQuestions() {
+        let xreq = new XMLHttpRequest();
+        xreq.onreadystatechange = displayQuestions;
+
+        xreq.open('GET', '/questionsJson');
+        xreq.send();
+    }
+    function displayQuestions() {
+        if(this.readyState == 4 && this.status == 200) {
+            let questions = document.getElementById('questions')
+
+            let questionList = JSON.parse(this.responseText);
+            let content = "";
+            content+=`<form action='/check-final'>`
+            for (q of questionList) {
+                content+=`<label>${q.stem}</label><br>`
+                
+                for (o of q.options) {
+                    content+=`<input type='radio' id = "${q.stem}" name = "${q.stem}" value='${o}' onclick = 'checkInd(this.name, this.value)'>`;
+                    content+=`<label for='${o}'>${o}</label><br>`
+                }
+                content+= `<div id="checkAns${q.stem}"></div>`
+            }
+            
+            content += `<input type = "submit">`
+            content += `</form><br>`
+
+            questions.innerHTML = content;
+        }
+    }
+
+    function checkInd(q, o) {
+        let xreq = new XMLHttpRequest();
+        xreq.onreadystatechange = displayResult;
+
+        xreq.open('POST', '/check-ind', true);
+        xreq.setRequestHeader("Content-Type", "application/json")
+        let data = {question:q, option:o}
+        xreq.send(JSON.stringify(data));
+    }
+
+    function displayResult() {
+        let verify = JSON.parse(this.responseText);
+        let location = document.getElementById(`checkAns${verify.question}`)
+        let content = ""
+        content += `${verify.correct}`
+
+        location.innerHTML = content;
+    }
+
+    getQuestions();
+</script>
+</html>
